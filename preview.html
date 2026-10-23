@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Box Launcher</title>
+<style>
+  :root{--accent:#3DDC84;--tx:#F2F5F9;--tx2:#8B97A8;--glass:rgba(255,255,255,.08);--ico:#1B2433;--p:0}
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%;color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;background:linear-gradient(#060A11,#0D1522)}
+  .wrap{display:flex;gap:16px;height:100%;padding:20px}
+  .card{background:linear-gradient(135deg,#16202E,#0F1723);border:1px solid rgba(255,255,255,.12);border-radius:26px}
+  /* barra lateral */
+  .rail{width:84px;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;padding:14px 0}
+  .ri{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;border-radius:18px;cursor:pointer;font-size:24px}
+  .ri small{font-size:10px;color:var(--tx2)}
+  .ri.sel{background:color-mix(in srgb,var(--accent) 22%,transparent);color:var(--accent)}.ri.sel small{color:var(--accent)}
+  /* reloj */
+  .clock{flex:.3;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:16px;min-width:210px}
+  .ringbox{flex:1;width:100%;display:grid;place-items:center;min-height:0;position:relative}
+  .ring{height:min(100%,100%);aspect-ratio:1;max-width:100%;border-radius:50%;position:relative;display:grid;place-items:center;
+    background:conic-gradient(from 0deg,color-mix(in srgb,var(--accent) 25%,transparent),var(--accent) calc(var(--p)*1deg),rgba(255,255,255,.08) calc(var(--p)*1deg));
+    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 14px),#000 calc(100% - 13px));mask:radial-gradient(farthest-side,transparent calc(100% - 14px),#000 calc(100% - 13px))}
+  .ctext{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+  .ctext b{font-size:clamp(30px,4vw,44px);font-weight:300}.ctext span{color:var(--tx2);font-size:13px}
+  .auto{font-size:12px;color:var(--tx2);text-align:center;padding-top:8px}
+  .auto b{color:var(--accent);cursor:pointer;display:block;font-size:14px;padding:6px}
+  /* derecha */
+  .right{flex:.7;display:flex;flex-direction:column;gap:14px;min-width:0}
+  .top{display:flex;gap:14px;flex:1;min-height:0}
+  .media{flex:2;padding:18px;display:flex;flex-direction:column;justify-content:space-between}
+  .mrow{display:flex;gap:14px;align-items:center}
+  .art{width:62px;height:62px;border-radius:16px;background:var(--glass);display:grid;place-items:center;font-size:28px;color:var(--accent)}
+  .mt{font-size:17px;font-weight:600}.ma{color:var(--tx2);font-size:14px}
+  .ctl{display:flex;justify-content:center;align-items:center;gap:6px}
+  .ctl span{padding:14px;font-size:20px;cursor:pointer;border-radius:50%}
+  .play{width:56px;height:56px;border-radius:50%;background:var(--accent);color:#06101A;display:grid;place-items:center;cursor:pointer;font-size:20px;margin:0 8px}
+  .side2{flex:1;display:flex;flex-direction:column;gap:14px;min-width:0}
+  .mini{flex:1;display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 14px}
+  .mini .big{font-size:36px;font-weight:300}.mini .t{font-size:28px;font-weight:300}.mini .s{font-size:12px;color:var(--tx2)}
+  .date{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .date .w{color:var(--accent);font-size:13px;font-weight:600;letter-spacing:1.5px}
+  .date .n{font-size:56px;font-weight:300;line-height:1.1}.date .m{color:var(--tx2);font-size:14px}
+  .favs{flex:1.05;display:flex;justify-content:space-evenly;align-items:center;padding:0 18px}
+  .fav{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px;border-radius:20px;cursor:pointer;user-select:none}
+  .fav .c{width:74px;height:74px;border-radius:50%;background:var(--ico);border:2px solid var(--accent);display:grid;place-items:center;font-size:32px}
+  .fav .c.auto{border-color:#fff}
+  .fav span{font-size:12px}
+  .btns{flex:.7;display:flex;gap:14px}
+  .btn{flex:1;border-radius:24px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;font-weight:600;cursor:pointer;transition:transform .12s}
+  .btn:active{transform:scale(.97)}
+  .btn i{font-style:normal;font-size:22px}
+  .btn.cp{background:linear-gradient(135deg,#22B455,#0C6A34)}
+  .btn.aa{background:linear-gradient(135deg,#3A7BF0,#1B3FA8)}
+  .btn.g{background:linear-gradient(135deg,#16202E,#0F1723);border:1px solid color-mix(in srgb,var(--accent) 60%,transparent)}
+  .btn.g i{color:var(--accent)}
+  /* cajón y menú */
+  .drawer{position:fixed;inset:0;background:rgba(6,10,17,.95);display:none;padding:24px 36px;overflow:auto}
+  .dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .dh h2{font-size:24px}.dh b{color:var(--accent);cursor:pointer;padding:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px 12px}
+  .app{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0;border-radius:22px;cursor:pointer;user-select:none}
+  .app:hover{background:var(--glass)}
+  .ico{width:72px;height:72px;border-radius:22px;background:var(--ico);display:grid;place-items:center;font-size:32px;position:relative}
+  .app span{font-size:13px}.dot{position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:var(--accent)}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.66);display:none;place-items:center}
+  .menu{width:360px;max-width:90vw;background:#151D2B;border-radius:28px;padding:22px;display:flex;flex-direction:column;gap:10px}
+  .menu h4{display:flex;align-items:center;gap:14px;font-size:20px;margin-bottom:4px}
+  .menu button{all:unset;cursor:pointer;background:var(--glass);border-radius:16px;padding:16px;font-size:16px}
+  .menu button.sub{background:none;color:var(--tx2)}
+  .note{position:fixed;left:50%;bottom:6px;transform:translateX(-50%);font-size:11px;color:var(--tx2);opacity:.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="rail card">
+    <div class="ri sel">⌂<small>Inicio</small></div>
+    <div class="ri">➤<small>Mapas</small></div>
+    <div class="ri">♫<small>Música</small></div>
+    <div class="ri">✆<small>Teléfono</small></div>
+  </div>
+
+  <div class="clock card">
+    <div class="ringbox"><div class="ring" id="ring"></div><div class="ctext" style="position:absolute"></div></div>
+    <div id="auto" class="auto"></div>
+  </div>
+
+  <div class="right">
+    <div class="top">
+      <div class="media card">
+        <div class="mrow"><div class="art" id="art">♫</div><div><div class="mt" id="mt">Sin música activa</div><div class="ma" id="ma">Abrir app de música</div></div></div>
+        <div class="ctl"><span>◀◀</span><div class="play" id="play">▶</div><span>▶▶</span></div>
+      </div>
+      <div class="side2">
+        <div class="mini card"><span class="big" style="color:var(--accent)">☀</span><div><div class="t">18°C</div><div class="s">Ambato · Despejado (ejemplo)</div></div></div>
+        <div class="mini card"><span class="big" id="n"></span><div><div class="s" style="color:var(--accent);font-weight:600;letter-spacing:1.2px" id="w"></div><div class="s" id="mo"></div></div></div>
+      </div>
+    </div>
+    <div class="favs card" id="favs"></div>
+    <div class="btns">
+      <div class="btn cp"><i>▶</i>CarPlay</div>
+      <div class="btn aa"><i>▲</i>Android Auto</div>
+      <div class="btn g" id="bApps"><i>⁝⁝⁝</i>Apps</div>
+      <div class="btn g" id="bTheme"><i>◐</i>Tema</div>
+    </div>
+  </div>
+</div>
+
+<div class="drawer" id="drawer"><div class="dh"><h2>Todas las apps</h2><b id="close">✕ Cerrar</b></div><div class="grid" id="g"></div></div>
+<div class="scrim" id="scrim"><div class="menu" id="menu"></div></div>
+<div class="note">Vista previa con datos de ejemplo · en el equipo real se ven tus apps y tu música</div>
+
+<script>
+const apps=[["Ajustes","⚙️"],["Archivos","📁"],["Cámara","📷"],["Mapas","🗺️"],["Mensajes","💬"],["Música","🎵"],["Navegador","🌐"],["Netflix","🎬"],["Play Store","🛍️"],["Radio","📻"],["Spotify","🎧"],["Teléfono","📞"],["Waze","🚗"],["WhatsApp","🟢"],["YouTube","▶️"]];
+const themes=["#3DDC84","#4DA3FF","#FF9F43","#B388FF"];
+let auto="CarPlay",count=5,favs=["Mapas","YouTube","Spotify","Waze","WhatsApp"],th=0,playing=false;
+const $=id=>document.getElementById(id);
+
+function tile(n,e,dot){return `<div class="app" data-n="${n}"><div class="ico">${e}${dot?'<i class="dot"></i>':''}</div><span>${n}</span></div>`}
+function drawFavs(){
+  $("favs").innerHTML=favs.map(n=>{const e=apps.find(a=>a[0]===n)[1];
+    return `<div class="fav" data-n="${n}"><div class="c ${n===auto?'auto':''}">${e}</div><span>${n}</span></div>`}).join("")||"<span style='color:var(--tx2)'>Abre «Apps», mantén pulsada una app y elige «Agregar a favoritas»</span>";
+  $("g").innerHTML=apps.map(([n,e])=>tile(n,e,n===auto)).join("");
+  document.querySelectorAll(".fav,.app").forEach(el=>{
+    let p;const n=el.dataset.n;
+    el.onpointerdown=()=>p=setTimeout(()=>{p=null;menu(n)},600);
+    el.onpointerup=el.onpointerleave=()=>clearTimeout(p);
+  });
+}
+function menu(n){
+  const e=apps.find(a=>a[0]===n)[1];
+  $("menu").innerHTML=`<h4><span style="font-size:36px">${e}</span>${n}</h4>
+   <button id="b1">${auto===n?"Quitar apertura al encender":"Abrir al encender"}</button>
+   <button id="b2">${favs.includes(n)?"Quitar de favoritas":"Agregar a favoritas"}</button>
+   <button class="sub" id="b3">Cerrar</button>`;
+  $("scrim").style.display="grid";
+  $("b1").onclick=()=>{auto=auto===n?null:n;count=0;closeMenu()};
+  $("b2").onclick=()=>{favs=favs.includes(n)?favs.filter(x=>x!==n):[...favs,n].slice(0,5);closeMenu()};
+  $("b3").onclick=closeMenu;
+}
+function closeMenu(){$("scrim").style.display="none";drawFavs();drawAuto()}
+$("scrim").onclick=e=>{if(e.target.id==="scrim")closeMenu()};
+$("bApps").onclick=()=>{$("drawer").style.display="block"};
+$("close").onclick=()=>{$("drawer").style.display="none"};
+$("bTheme").onclick=()=>{th=(th+1)%themes.length;document.documentElement.style.setProperty("--accent",themes[th])};
+$("play").onclick=()=>{playing=!playing;$("play").textContent=playing?"❚❚":"▶";
+  $("mt").textContent=playing?"Canción de ejemplo":"Sin música activa";$("ma").textContent=playing?"Artista de ejemplo":"Abrir app de música"};
+function drawAuto(){
+  const s=$("auto");
+  if(count>0&&auto){s.innerHTML=`Abriendo ${auto} en ${count}s<b id="c">Cancelar</b>`;$("c").onclick=()=>{count=0;drawAuto()}}
+  else s.textContent=auto?"Al encender: "+auto:"Sin app de inicio";
+}
+setInterval(()=>{if(count>0){count--;drawAuto()}},1000);
+function clock(){
+  const n=new Date();
+  const hm=n.toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit",hour12:false});
+  const d=n.toLocaleDateString("es",{weekday:"short",day:"numeric",month:"short"});
+  document.querySelector(".ctext").innerHTML=`<b>${hm}</b><span>${d[0].toUpperCase()+d.slice(1)}</span>`;
+  $("ring").style.setProperty("--p",360*(n.getSeconds()+1)/60);
+  $("w").textContent=n.toLocaleDateString("es",{weekday:"long"}).toUpperCase();
+  $("n").textContent=n.getDate();
+  const m=n.toLocaleDateString("es",{month:"long",year:"numeric"});$("mo").textContent=m[0].toUpperCase()+m.slice(1);
+}
+setInterval(clock,1000);clock();drawFavs();drawAuto();
+</script>
+</body>
+</html>
